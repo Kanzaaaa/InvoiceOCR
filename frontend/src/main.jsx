@@ -21,10 +21,7 @@ const POSITION_TABLE_PAGE_SIZE = 5;
 const MAX_UPLOAD_FILES = 3;
 const PROCESSING_POLL_MS = 2000;
 const PROCESSING_MAX_POLLS = 90;
-const AUTH_STORAGE_KEY = "invoiceocr_authenticated";
 const LANGUAGE_STORAGE_KEY = "invoiceocr_language";
-const LOGIN_USERNAME = import.meta.env.VITE_APP_USERNAME || "admin";
-const LOGIN_PASSWORD = import.meta.env.VITE_APP_PASSWORD || "invoiceocr2026";
 
 const COPY = {
   en: {
@@ -38,6 +35,7 @@ const COPY = {
     signIn: "Sign in",
     logout: "Log out",
     invalidLogin: "Invalid username or password.",
+    sessionExpired: "Your session expired. Please sign in again.",
     overview: "Overview",
     invoices: "Invoices",
     positions: "Positions",
@@ -115,6 +113,7 @@ const COPY = {
     signIn: "Anmelden",
     logout: "Abmelden",
     invalidLogin: "Benutzername oder Passwort ist falsch.",
+    sessionExpired: "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
     overview: "Ueberblick",
     invoices: "Rechnungen",
     positions: "Positionen",
@@ -216,7 +215,8 @@ const posColumns = [
 
 function App() {
   const [language, setLanguage] = useState(() => localStorage.getItem(LANGUAGE_STORAGE_KEY) || "en");
-  const [authenticated, setAuthenticated] = useState(() => localStorage.getItem(AUTH_STORAGE_KEY) === "true");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [loginValues, setLoginValues] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [invoices, setInvoices] = useState([]);
@@ -267,12 +267,19 @@ function App() {
   const hasExtractedData = invoices.length > 0 || positions.length > 0 || clients.length > 0;
 
   useEffect(() => {
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked) {
+      return;
+    }
     if (authenticated) {
       loadTables({ initial: true });
       return;
     }
     setLoading(false);
-  }, [authenticated]);
+  }, [authenticated, authChecked]);
 
   useEffect(() => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
@@ -282,6 +289,43 @@ function App() {
     setInvoicePage(1);
     setPositionPage(1);
   }, [selectedClientId]);
+
+  async function checkSession() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        credentials: "include",
+      });
+      const payload = await response.json();
+      setAuthenticated(response.ok && Boolean(payload.authenticated));
+    } catch {
+      setAuthenticated(false);
+    } finally {
+      setAuthChecked(true);
+    }
+  }
+
+  function handleUnauthorized() {
+    setAuthenticated(false);
+    setInvoices([]);
+    setPositions([]);
+    setProcessingIds([]);
+    setProcessingMessage("");
+    setLoginError(t.sessionExpired);
+  }
+
+  async function apiFetch(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      credentials: "include",
+      headers: {
+        ...(options.headers || {}),
+      },
+    });
+    if (response.status === 401) {
+      handleUnauthorized();
+    }
+    return response;
+  }
 
   async function loadTables({ initial = false } = {}) {
     setError("");
@@ -315,7 +359,7 @@ function App() {
     let page = 1;
 
     while (true) {
-      const response = await fetch(`${API_BASE_URL}${path}?page=${page}&page_size=${API_PAGE_SIZE}`);
+      const response = await apiFetch(`${path}?page=${page}&page_size=${API_PAGE_SIZE}`);
       if (!response.ok) {
         throw new Error(t.tableRequestFailed);
       }
@@ -446,7 +490,7 @@ function App() {
         formData.append(key, file);
       }
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await apiFetch(endpoint, {
         method: "POST",
         body: formData,
       });
@@ -478,7 +522,7 @@ function App() {
 
       const statuses = await Promise.allSettled(
         documentIds.map(async (documentId) => {
-          const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}`);
+          const response = await apiFetch(`/api/documents/${documentId}`);
           if (!response.ok) {
             throw new Error("Document status request failed.");
           }
@@ -511,8 +555,25 @@ function App() {
     setNotice(t.processingStill);
   }
 
-  function downloadExport(path) {
-    window.location.href = `${API_BASE_URL}${path}`;
+  async function downloadExport(path) {
+    try {
+      const response = await apiFetch(path);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || t.exportExcel);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "lexware_invoice_review.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || t.exportExcel);
+    }
   }
 
   async function loadValidationDetails(invoiceId) {
@@ -531,7 +592,7 @@ function App() {
     }));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/validation-results`);
+      const response = await apiFetch(`/api/invoices/${invoiceId}/validation-results`);
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.error || t.unableToLoadValidation);
@@ -554,7 +615,7 @@ function App() {
     setNotice("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/database/data`, {
+      const response = await apiFetch("/api/database/data", {
         method: "DELETE",
       });
       const payload = await response.json();
@@ -577,20 +638,48 @@ function App() {
     }
   }
 
-  function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
-    if (loginValues.username === LOGIN_USERNAME && loginValues.password === LOGIN_PASSWORD) {
-      localStorage.setItem(AUTH_STORAGE_KEY, "true");
-      setAuthenticated(true);
+    setLoginError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginValues),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.authenticated) {
+        throw new Error(payload.error || t.invalidLogin);
+      }
       setLoginError("");
-      return;
+      setAuthenticated(true);
+    } catch (err) {
+      setLoginError(err.message || t.invalidLogin);
     }
-    setLoginError(t.invalidLogin);
   }
 
-  function handleLogout() {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+  async function handleLogout() {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
     setAuthenticated(false);
+    setInvoices([]);
+    setPositions([]);
+  }
+
+  if (!authChecked) {
+    return (
+      <main className="login-shell">
+        <section className="login-card loading-login">
+          <Loader2 size={28} className="spin" />
+        </section>
+      </main>
+    );
   }
 
   if (!authenticated) {

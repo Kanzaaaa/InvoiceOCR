@@ -11,6 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
+    APP_USERNAME = os.getenv("APP_USERNAME", "admin")
+    APP_PASSWORD = os.getenv("APP_PASSWORD", "invoiceocr2026")
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() in {"1", "true", "yes"}
     CORS_ORIGINS = [
         origin.strip()
         for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")

@@ -82,6 +82,10 @@ OPENAI_API_KEY=sk-your-openai-api-key
 OPENAI_MODEL=gpt-5.6-sol
 OPENAI_FILE_DETAIL=high
 
+APP_USERNAME=admin
+APP_PASSWORD=invoiceocr2026
+SECRET_KEY=replace-with-a-long-random-value
+
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=invoices_ocr
@@ -184,18 +188,11 @@ If Flask is not running on `http://localhost:5000`, create `frontend/.env`:
 VITE_API_BASE_URL=http://localhost:6001
 ```
 
-The local login defaults are:
+The local login defaults are controlled by the Flask backend:
 
 ```ini
-Username: admin
-Password: invoiceocr2026
-```
-
-To override them for a frontend build, add these to `frontend/.env`:
-
-```ini
-VITE_APP_USERNAME=admin
-VITE_APP_PASSWORD=invoiceocr2026
+APP_USERNAME=admin
+APP_PASSWORD=invoiceocr2026
 ```
 
 Then restart the frontend dev server.
@@ -234,6 +231,27 @@ curl "http://localhost:5000/api/invoice-pos?page=1&page_size=25"
 - React frontend: dashboard UI for login, upload, review, validation display, reset, language switching, and Excel export.
 
 ## API
+
+Login and create a Flask session cookie:
+
+```bash
+curl -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"invoiceocr2026"}' \
+  http://localhost:5000/api/auth/login
+```
+
+Use `-b cookies.txt` for protected API calls when testing with `curl`:
+
+```bash
+curl -b cookies.txt "http://localhost:5000/api/invoices?page=1&page_size=25"
+```
+
+Logout:
+
+```bash
+curl -b cookies.txt -X POST http://localhost:5000/api/auth/logout
+```
 
 Upload a scanned PDF and start background processing:
 
@@ -329,6 +347,8 @@ Configure allowed origins with `CORS_ORIGINS` in `.env`.
 Recommended React flow:
 
 ```text
+POST /api/auth/login
+-> browser receives Flask session cookie
 POST /api/documents
 -> read document.id
 -> poll GET /api/documents/:id until document.processing_status is completed or failed
