@@ -11,14 +11,14 @@ from app.db import get_conn
 
 
 INVOICE_REVIEW_COLUMNS = [
-    "invoice_id",
-    "invoice_number",
+    "Rechnungs-ID",
+    "Rechnungsnummer",
     "Dateiname",
     "Kunde/Lieferant",
-    "street",
-    "house_number",
-    "postal_code",
-    "city",
+    "Strasse",
+    "Hausnummer",
+    "PLZ",
+    "Stadt",
     "Dokumenttyp",
     "Belegdatum",
     "Netto",
@@ -29,8 +29,8 @@ INVOICE_REVIEW_COLUMNS = [
 ]
 
 INVOICE_POS_REVIEW_COLUMNS = [
-    "invoice_id",
-    "invoice_number",
+    "Rechnungs-ID",
+    "Rechnungsnummer",
     "Kunde/Lieferant",
     "Belegdatum",
     "Position",
@@ -46,7 +46,7 @@ def export_invoice_review_to_excel() -> BytesIO:
 
     positions_by_invoice_id: dict[int, list[dict[str, Any]]] = {}
     for pos in pos_rows:
-        positions_by_invoice_id.setdefault(pos["invoice_id"], []).append(pos)
+        positions_by_invoice_id.setdefault(pos["Rechnungs-ID"], []).append(pos)
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -93,7 +93,7 @@ def export_invoice_review_to_excel() -> BytesIO:
             worksheet.cell(row=current_row, column=column_index).alignment = right_alignment
         current_row += 1
 
-        positions = positions_by_invoice_id.get(invoice["invoice_id"], [])
+        positions = positions_by_invoice_id.get(invoice["Rechnungs-ID"], [])
         if positions:
             _write_row(
                 worksheet,
@@ -125,14 +125,14 @@ def export_invoice_review_to_excel() -> BytesIO:
 def _invoice_review_query() -> str:
     return """
         SELECT
-            i.id AS "invoice_id",
-            i.invoice_number AS "invoice_number",
+            i.id AS "Rechnungs-ID",
+            i.invoice_number AS "Rechnungsnummer",
             d.file_name AS "Dateiname",
             c.name_original AS "Kunde/Lieferant",
-            c.street AS "street",
-            c.house_number AS "house_number",
-            c.postal_code AS "postal_code",
-            c.city AS "city",
+            c.street AS "Strasse",
+            c.house_number AS "Hausnummer",
+            c.postal_code AS "PLZ",
+            c.city AS "Stadt",
             i.invoice_type AS "Dokumenttyp",
             i.invoice_date AS "Belegdatum",
             i.gesamt_netto AS "Netto",
@@ -158,8 +158,8 @@ def _invoice_review_query() -> str:
 def _invoice_review_pos_query() -> str:
     return """
         SELECT
-            i.id AS "invoice_id",
-            i.invoice_number AS "invoice_number",
+            i.id AS "Rechnungs-ID",
+            i.invoice_number AS "Rechnungsnummer",
             c.name_original AS "Kunde/Lieferant",
             i.invoice_date AS "Belegdatum",
             p.pos_number AS "Position",

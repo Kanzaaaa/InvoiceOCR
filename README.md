@@ -184,6 +184,20 @@ If Flask is not running on `http://localhost:5000`, create `frontend/.env`:
 VITE_API_BASE_URL=http://localhost:6001
 ```
 
+The local login defaults are:
+
+```ini
+Username: admin
+Password: invoiceocr2026
+```
+
+To override them for a frontend build, add these to `frontend/.env`:
+
+```ini
+VITE_APP_USERNAME=admin
+VITE_APP_PASSWORD=invoiceocr2026
+```
+
 Then restart the frontend dev server.
 
 ### 8. Test The Local App
@@ -217,7 +231,7 @@ curl "http://localhost:5000/api/invoice-pos?page=1&page_size=25"
 - PostgreSQL: stores clients, documents, invoices, invoice positions, extraction runs, and validation results.
 - Redis: message broker used by Celery.
 - Celery worker: performs background OCR extraction and database insertion.
-- React frontend: dashboard UI for upload, review, validation display, reset, and Excel export.
+- React frontend: dashboard UI for login, upload, review, validation display, reset, language switching, and Excel export.
 
 ## API
 
@@ -286,7 +300,7 @@ Export the combined Lexware-oriented review/import file:
 curl -o lexware_invoice_review.xlsx http://localhost:5000/api/exports/lexware_invoice_review.xlsx
 ```
 
-The combined export contains each invoice row followed by its nested invoice position header and position rows. It includes `invoice_id` and `invoice_number` so repeated extractions of the same client/invoice number can still be distinguished.
+The combined export contains each invoice row followed by its nested invoice position header and position rows. It includes German headers such as `Rechnungs-ID` and `Rechnungsnummer` so repeated extractions of the same client/invoice number can still be distinguished.
 
 View validation results:
 

@@ -21,20 +21,181 @@ const POSITION_TABLE_PAGE_SIZE = 5;
 const MAX_UPLOAD_FILES = 3;
 const PROCESSING_POLL_MS = 2000;
 const PROCESSING_MAX_POLLS = 90;
+const AUTH_STORAGE_KEY = "invoiceocr_authenticated";
+const LANGUAGE_STORAGE_KEY = "invoiceocr_language";
+const LOGIN_USERNAME = import.meta.env.VITE_APP_USERNAME || "admin";
+const LOGIN_PASSWORD = import.meta.env.VITE_APP_PASSWORD || "invoiceocr2026";
+
+const COPY = {
+  en: {
+    appTitle: "HEDSOFT - Dashboard - Invoice OCR Extraction",
+    appSubtitle:
+      "Upload scanned invoice PDFs, extract accounting fields with OCR, review validation results, and export Lexware-ready invoice and position tables.",
+    loginTitle: "Invoice OCR Access",
+    loginSubtitle: "Sign in to upload invoices, review extracted records, and export the Lexware-ready workbook.",
+    username: "Username",
+    password: "Password",
+    signIn: "Sign in",
+    logout: "Log out",
+    invalidLogin: "Invalid username or password.",
+    overview: "Overview",
+    invoices: "Invoices",
+    positions: "Positions",
+    clients: "Clients",
+    validationIssues: "Validation Issues",
+    howToTitle: "How to use this dashboard",
+    howToText:
+      "Upload up to three scanned PDF invoices, wait for OCR extraction to finish, review the invoice and position tables, check validation issues when the warning icon appears, then export the Lexware-ready Excel file.",
+    uploadStep: "Upload",
+    extractStep: "Extract",
+    reviewStep: "Review",
+    exportStep: "Export",
+    uploadTitle: "Invoice Upload",
+    uploadSubtitle: "Upload up to 3 scanned PDF invoices.",
+    uploadInfo:
+      "This is Kenza's test API. It currently supports up to three PDF files per upload, but it can later be expanded to handle more files. If the API key or service access expires, OCR extraction will stop working until the credentials are renewed.",
+    pdfSlot: "PDF",
+    choosePdf: "Choose PDF",
+    dragPdf: "or drag a PDF here",
+    replacePdf: "Drag another PDF here to replace it",
+    startUpload: "Start Upload",
+    onlyPdf: "Only PDF files can be uploaded.",
+    uploadFailed: "Upload failed.",
+    queued: "queued for extraction.",
+    processingStart: "Processing",
+    processingInvoices: "Processing invoices",
+    processingProgress: "Processing invoices...",
+    processingWait: "Your request is being processed. Please wait until extraction finishes.",
+    extractionFinished: "Extraction finished. Tables are updated.",
+    processingStill: "Processing is still running. The tables will update after the next completed extraction.",
+    loadError: "Unable to load table data. Check that the Flask API and database are running.",
+    tableRequestFailed: "Table request failed.",
+    unableToLoadValidation: "Unable to load validation results.",
+    allClients: "All clients",
+    invoiceTableTitle: "Invoice",
+    positionTableTitle: "Invoice POS",
+    showTables: "Show tables",
+    hideTables: "Hide tables",
+    exportExcel: "Export combined invoice review Excel",
+    rows: "rows",
+    noRows: "No rows to display",
+    loadingData: "Loading data",
+    page: "Page",
+    of: "of",
+    previous: "Previous",
+    next: "Next",
+    finished: "finished",
+    validationIssue: "validation issue",
+    validationIssuesLower: "validation issues",
+    validationLoading: "Loading validation details...",
+    validationHoverAgain: "Hover again to load validation details.",
+    more: "more",
+    check: "Check",
+    expected: "Expected",
+    actual: "Actual",
+    resetTitle: "Reset Process",
+    resetText: "Delete all extracted database rows before starting a new test run.",
+    deleteTablesTitle: "Delete extracted tables?",
+    deleteTablesText: "Are you sure you want to repeat the process again and delete the tables?",
+    no: "No",
+    yesDelete: "Yes, delete",
+    deleteSuccess: "Extracted tables were deleted. You can start the process again.",
+    deleteError: "Unable to delete extracted tables.",
+    noDataTitle: "No extracted data yet",
+    noDataText: "Upload at least one PDF invoice to display the invoice and position tables.",
+  },
+  de: {
+    appTitle: "HEDSOFT - Dashboard - Rechnung OCR Extraktion",
+    appSubtitle:
+      "Lade gescannte Rechnungs-PDFs hoch, extrahiere Buchhaltungsfelder per OCR, pruefe Validierungsergebnisse und exportiere eine Lexware-fertige Arbeitsmappe.",
+    loginTitle: "Zugang zur Rechnung OCR",
+    loginSubtitle: "Melde dich an, um Rechnungen hochzuladen, extrahierte Datensaetze zu pruefen und die Lexware-Datei zu exportieren.",
+    username: "Benutzername",
+    password: "Passwort",
+    signIn: "Anmelden",
+    logout: "Abmelden",
+    invalidLogin: "Benutzername oder Passwort ist falsch.",
+    overview: "Ueberblick",
+    invoices: "Rechnungen",
+    positions: "Positionen",
+    clients: "Kunden",
+    validationIssues: "Validierungsfehler",
+    howToTitle: "So verwendest du dieses Dashboard",
+    howToText:
+      "Lade bis zu drei gescannte Rechnungs-PDFs hoch, warte bis die OCR-Extraktion beendet ist, pruefe Rechnungs- und Positionstabellen, kontrolliere Validierungsfehler beim Warnsymbol und exportiere danach die Lexware-fertige Excel-Datei.",
+    uploadStep: "Hochladen",
+    extractStep: "Extrahieren",
+    reviewStep: "Pruefen",
+    exportStep: "Exportieren",
+    uploadTitle: "Rechnungen hochladen",
+    uploadSubtitle: "Bis zu 3 gescannte Rechnungs-PDFs hochladen.",
+    uploadInfo:
+      "Dies ist Kenzas Test-API. Aktuell unterstuetzt sie bis zu drei PDF-Dateien pro Upload, kann spaeter aber erweitert werden. Wenn der API-Schluessel oder der Servicezugang ablaeuft, funktioniert die OCR-Extraktion erst wieder nach Erneuerung der Zugangsdaten.",
+    pdfSlot: "PDF",
+    choosePdf: "PDF auswaehlen",
+    dragPdf: "oder PDF hierher ziehen",
+    replacePdf: "Ein anderes PDF hierher ziehen, um es zu ersetzen",
+    startUpload: "Upload starten",
+    onlyPdf: "Es koennen nur PDF-Dateien hochgeladen werden.",
+    uploadFailed: "Upload fehlgeschlagen.",
+    queued: "zur Extraktion eingereiht.",
+    processingStart: "Verarbeite",
+    processingInvoices: "Rechnungen werden verarbeitet",
+    processingProgress: "Rechnungen werden verarbeitet...",
+    processingWait: "Die Anfrage wird verarbeitet. Bitte warte, bis die Extraktion abgeschlossen ist.",
+    extractionFinished: "Extraktion abgeschlossen. Die Tabellen wurden aktualisiert.",
+    processingStill: "Die Verarbeitung laeuft noch. Die Tabellen werden nach der naechsten abgeschlossenen Extraktion aktualisiert.",
+    loadError: "Tabellendaten konnten nicht geladen werden. Pruefe, ob Flask API und Datenbank laufen.",
+    tableRequestFailed: "Tabellenabfrage fehlgeschlagen.",
+    unableToLoadValidation: "Validierungsergebnisse konnten nicht geladen werden.",
+    allClients: "Alle Kunden",
+    invoiceTableTitle: "Rechnung",
+    positionTableTitle: "Rechnungspositionen",
+    showTables: "Tabellen anzeigen",
+    hideTables: "Tabellen ausblenden",
+    exportExcel: "Kombinierte Rechnungspruefung als Excel exportieren",
+    rows: "Zeilen",
+    noRows: "Keine Zeilen vorhanden",
+    loadingData: "Daten werden geladen",
+    page: "Seite",
+    of: "von",
+    previous: "Zurueck",
+    next: "Weiter",
+    finished: "abgeschlossen",
+    validationIssue: "Validierungsfehler",
+    validationIssuesLower: "Validierungsfehler",
+    validationLoading: "Validierungsdetails werden geladen...",
+    validationHoverAgain: "Erneut darueberfahren, um Validierungsdetails zu laden.",
+    more: "weitere",
+    check: "Pruefung",
+    expected: "Erwartet",
+    actual: "Tatsaechlich",
+    resetTitle: "Prozess zuruecksetzen",
+    resetText: "Alle extrahierten Datenbankzeilen loeschen, bevor ein neuer Testlauf gestartet wird.",
+    deleteTablesTitle: "Extrahierte Tabellen loeschen?",
+    deleteTablesText: "Bist du sicher, dass du den Prozess neu starten und die Tabellen loeschen moechtest?",
+    no: "Nein",
+    yesDelete: "Ja, loeschen",
+    deleteSuccess: "Extrahierte Tabellen wurden geloescht. Du kannst den Prozess neu starten.",
+    deleteError: "Extrahierte Tabellen konnten nicht geloescht werden.",
+    noDataTitle: "Noch keine extrahierten Daten",
+    noDataText: "Lade mindestens eine PDF-Rechnung hoch, um die Rechnungs- und Positionstabellen anzuzeigen.",
+  },
+};
 
 function createUploadSlots() {
   return Array.from({ length: MAX_UPLOAD_FILES }, () => ({ id: crypto.randomUUID(), file: null }));
 }
 
 const invoiceColumns = [
-  { key: "id", label: "invoice_id", align: "center", width: 120, minWidth: 95 },
-  { key: "invoice_number", label: "invoice_number", width: 170, minWidth: 130 },
+  { key: "id", label: "Rechnungs-ID", align: "center", width: 140, minWidth: 115 },
+  { key: "invoice_number", label: "Rechnungsnummer", width: 190, minWidth: 150 },
   { key: "document_file_name", label: "Dateiname", width: 470, minWidth: 220 },
   { key: "client_name", label: "Kunde/Lieferant", width: 560, minWidth: 240 },
-  { key: "client_street", label: "street", width: 190, minWidth: 140 },
-  { key: "client_house_number", label: "house_number", width: 150, minWidth: 120 },
-  { key: "client_postal_code", label: "postal_code", width: 140, minWidth: 115 },
-  { key: "client_city", label: "city", width: 170, minWidth: 125 },
+  { key: "client_street", label: "Strasse", width: 190, minWidth: 140 },
+  { key: "client_house_number", label: "Hausnummer", width: 150, minWidth: 120 },
+  { key: "client_postal_code", label: "PLZ", width: 120, minWidth: 95 },
+  { key: "client_city", label: "Stadt", width: 170, minWidth: 125 },
   { key: "invoice_type", label: "Dokumenttyp", width: 190, minWidth: 150 },
   { key: "invoice_date", label: "Belegdatum", width: 150, minWidth: 125 },
   { key: "gesamt_netto", label: "Netto", align: "right", type: "amount", width: 140, minWidth: 110 },
@@ -44,8 +205,8 @@ const invoiceColumns = [
 ];
 
 const posColumns = [
-  { key: "invoice_id", label: "invoice_id", align: "center", width: 120, minWidth: 95 },
-  { key: "invoice_number", label: "invoice_number", width: 170, minWidth: 130 },
+  { key: "invoice_id", label: "Rechnungs-ID", align: "center", width: 140, minWidth: 115 },
+  { key: "invoice_number", label: "Rechnungsnummer", width: 190, minWidth: 150 },
   { key: "client_name", label: "Kunde/Lieferant", width: 430, minWidth: 220 },
   { key: "invoice_date", label: "Belegdatum", width: 150, minWidth: 125 },
   { key: "pos_number", label: "Position", align: "center", width: 130, minWidth: 100 },
@@ -54,6 +215,10 @@ const posColumns = [
 ];
 
 function App() {
+  const [language, setLanguage] = useState(() => localStorage.getItem(LANGUAGE_STORAGE_KEY) || "en");
+  const [authenticated, setAuthenticated] = useState(() => localStorage.getItem(AUTH_STORAGE_KEY) === "true");
+  const [loginValues, setLoginValues] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
   const [invoices, setInvoices] = useState([]);
   const [positions, setPositions] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState("all");
@@ -71,6 +236,7 @@ function App() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [validationDetailsByInvoiceId, setValidationDetailsByInvoiceId] = useState({});
+  const t = COPY[language] || COPY.en;
 
   const clients = useMemo(() => {
     const byId = new Map();
@@ -101,8 +267,16 @@ function App() {
   const hasExtractedData = invoices.length > 0 || positions.length > 0 || clients.length > 0;
 
   useEffect(() => {
-    loadTables({ initial: true });
-  }, []);
+    if (authenticated) {
+      loadTables({ initial: true });
+      return;
+    }
+    setLoading(false);
+  }, [authenticated]);
+
+  useEffect(() => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  }, [language]);
 
   useEffect(() => {
     setInvoicePage(1);
@@ -122,7 +296,7 @@ function App() {
 
     try {
       if (invoiceResult.status === "rejected" && positionResult.status === "rejected") {
-        throw new Error("Unable to load table data. Check that the Flask API and database are running.");
+        throw new Error(t.loadError);
       }
 
       const invoiceRows = invoiceResult.status === "fulfilled" ? invoiceResult.value : [];
@@ -130,7 +304,7 @@ function App() {
       setInvoices(invoiceRows);
       setPositions(positionRows);
     } catch (err) {
-      setError(err.message || "Unable to load invoice data.");
+      setError(err.message || t.loadError);
     } finally {
       setLoading(false);
     }
@@ -143,7 +317,7 @@ function App() {
     while (true) {
       const response = await fetch(`${API_BASE_URL}${path}?page=${page}&page_size=${API_PAGE_SIZE}`);
       if (!response.ok) {
-        throw new Error("Table request failed.");
+        throw new Error(t.tableRequestFailed);
       }
       const payload = await response.json();
       items.push(...payload.items);
@@ -171,7 +345,7 @@ function App() {
     const pdfFiles = validPdfFiles(fileList);
 
     if (pdfFiles.length === 0) {
-      setError("Only PDF files can be uploaded.");
+      setError(t.onlyPdf);
       return;
     }
 
@@ -246,7 +420,7 @@ function App() {
 
     const [file] = validPdfFiles(event.dataTransfer.files);
     if (!file) {
-      setError("Only PDF files can be uploaded.");
+      setError(t.onlyPdf);
       return;
     }
 
@@ -278,7 +452,7 @@ function App() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Upload failed.");
+        throw new Error(payload.error || t.uploadFailed);
       }
 
       const count = files.length === 1 ? 1 : payload.count;
@@ -287,12 +461,12 @@ function App() {
         : payload.documents.map((document) => document.id);
       setUploadSlots(createUploadSlots());
       setProcessingIds(documentIds);
-      setProcessingMessage(`Processing ${count} invoice${count === 1 ? "" : "s"}...`);
-      setNotice(`${count} invoice${count === 1 ? "" : "s"} queued for extraction.`);
+      setProcessingMessage(`${t.processingStart} ${count} ${t.invoices.toLowerCase()}...`);
+      setNotice(`${count} ${t.invoices.toLowerCase()} ${t.queued}`);
       await loadTables();
       await pollProcessing(documentIds);
     } catch (err) {
-      setError(err.message || "Upload failed.");
+      setError(err.message || t.uploadFailed);
     } finally {
       setUploading(false);
     }
@@ -317,13 +491,13 @@ function App() {
         .filter((status) => status.status === "fulfilled")
         .map((status) => status.value);
       const finishedCount = resolvedStatuses.filter((status) => status === "completed" || status === "failed").length;
-      setProcessingMessage(`Processing invoices... ${finishedCount}/${documentIds.length} finished`);
+      setProcessingMessage(`${t.processingProgress} ${finishedCount}/${documentIds.length} ${t.finished}`);
 
       if (resolvedStatuses.length === documentIds.length && finishedCount === documentIds.length) {
         await loadTables();
         setProcessingIds([]);
         setProcessingMessage("");
-        setNotice("Extraction finished. Tables are updated.");
+        setNotice(t.extractionFinished);
         return;
       }
 
@@ -334,7 +508,7 @@ function App() {
 
     setProcessingIds([]);
     setProcessingMessage("");
-    setNotice("Processing is still running. The tables will update after the next completed extraction.");
+    setNotice(t.processingStill);
   }
 
   function downloadExport(path) {
@@ -360,7 +534,7 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/validation-results`);
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to load validation results.");
+        throw new Error(payload.error || t.unableToLoadValidation);
       }
       setValidationDetailsByInvoiceId((details) => ({
         ...details,
@@ -369,7 +543,7 @@ function App() {
     } catch (err) {
       setValidationDetailsByInvoiceId((details) => ({
         ...details,
-        [cacheKey]: { loading: false, loaded: false, error: err.message || "Unable to load validation results.", items: [] },
+        [cacheKey]: { loading: false, loaded: false, error: err.message || t.unableToLoadValidation, items: [] },
       }));
     }
   }
@@ -385,7 +559,7 @@ function App() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to delete extracted tables.");
+        throw new Error(payload.error || t.deleteError);
       }
 
       setInvoices([]);
@@ -395,24 +569,59 @@ function App() {
       setPositionPage(1);
       setTablesExpanded(false);
       setResetModalOpen(false);
-      setNotice("Extracted tables were deleted. You can start the process again.");
+      setNotice(t.deleteSuccess);
     } catch (err) {
-      setError(err.message || "Unable to delete extracted tables.");
+      setError(err.message || t.deleteError);
     } finally {
       setResetting(false);
     }
   }
 
+  function handleLogin(event) {
+    event.preventDefault();
+    if (loginValues.username === LOGIN_USERNAME && loginValues.password === LOGIN_PASSWORD) {
+      localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      setAuthenticated(true);
+      setLoginError("");
+      return;
+    }
+    setLoginError(t.invalidLogin);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setAuthenticated(false);
+  }
+
+  if (!authenticated) {
+    return (
+      <LoginPage
+        copy={t}
+        language={language}
+        onLanguageChange={setLanguage}
+        values={loginValues}
+        error={loginError}
+        onChange={setLoginValues}
+        onSubmit={handleLogin}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <section className="page-header">
-        <h1>
-          <span>HEDSOFT</span> - Dashboard - Invoice OCR Extraction
-        </h1>
-        <p>
-          Upload scanned invoice PDFs, extract accounting fields with OCR, review validation results, and export
-          Lexware-ready invoice and position tables.
-        </p>
+        <div>
+          <h1>
+            <span>HEDSOFT</span> - {t.appTitle.replace("HEDSOFT - ", "")}
+          </h1>
+          <p>{t.appSubtitle}</p>
+        </div>
+        <div className="header-actions">
+          <LanguageSwitch language={language} onChange={setLanguage} />
+          <button className="logout-button" type="button" onClick={handleLogout}>
+            {t.logout}
+          </button>
+        </div>
       </section>
 
       {(error || notice) && (
@@ -425,29 +634,25 @@ function App() {
         </section>
       )}
 
-      <section className="overview-card" aria-label="Application overview">
-        <h2>Overview</h2>
+      <section className="overview-card" aria-label={t.overview}>
+        <h2>{t.overview}</h2>
         <div className="summary-row">
-          <SummaryTile label="Invoices" value={filteredInvoices.length} />
-          <SummaryTile label="Positions" value={filteredPositions.length} />
-          <SummaryTile label="Clients" value={selectedClientId === "all" ? clients.length : 1} />
-          <SummaryTile label="Validation Issues" value={failedInvoices} tone={failedInvoices > 0 ? "warning" : "ok"} />
+          <SummaryTile label={t.invoices} value={filteredInvoices.length} />
+          <SummaryTile label={t.positions} value={filteredPositions.length} />
+          <SummaryTile label={t.clients} value={selectedClientId === "all" ? clients.length : 1} />
+          <SummaryTile label={t.validationIssues} value={failedInvoices} tone={failedInvoices > 0 ? "warning" : "ok"} />
         </div>
         <div className="overview-divider" />
         <div className="overview-body">
           <div>
-            <h3>How to use this dashboard</h3>
-            <p>
-              Upload up to three scanned PDF invoices, wait for OCR extraction to finish, review the invoice and
-              position tables, check validation issues when the warning icon appears, then export the Lexware-ready
-              Excel files.
-            </p>
+            <h3>{t.howToTitle}</h3>
+            <p>{t.howToText}</p>
           </div>
           <div className="overview-steps" aria-label="Workflow steps">
-            <span>Upload</span>
-            <span>Extract</span>
-            <span>Review</span>
-            <span>Export</span>
+            <span>{t.uploadStep}</span>
+            <span>{t.extractStep}</span>
+            <span>{t.reviewStep}</span>
+            <span>{t.exportStep}</span>
           </div>
         </div>
       </section>
@@ -455,8 +660,16 @@ function App() {
       <section className="upload-panel">
         <div className="panel-heading">
           <div>
-            <h2>Invoice Upload</h2>
-            <p>Upload up to 3 scanned PDF invoices.</p>
+            <div className="title-with-info">
+              <h2>{t.uploadTitle}</h2>
+              <span className="info-tooltip">
+                <button type="button" aria-label="Invoice upload information">
+                  <Info size={15} />
+                </button>
+                <span role="tooltip">{t.uploadInfo}</span>
+              </span>
+            </div>
+            <p>{t.uploadSubtitle}</p>
           </div>
         </div>
 
@@ -479,8 +692,8 @@ function App() {
               >
                 <Upload size={24} />
                 <label htmlFor={`invoice-file-${slot.id}`}>
-                  <strong>{slot.file ? slot.file.name : `PDF ${index + 1}`}</strong>
-                  <span>{slot.file ? "Drag another PDF here to replace it" : "PDF hereher ziehen oder klicken"}</span>
+                  <strong>{slot.file ? slot.file.name : `${t.pdfSlot} ${index + 1}`}</strong>
+                  <span>{slot.file ? t.replacePdf : `${t.choosePdf} ${t.dragPdf}`}</span>
                 </label>
                 <input
                   id={`invoice-file-${slot.id}`}
@@ -502,11 +715,19 @@ function App() {
         <div className="upload-actions">
           <button className="primary-button" type="button" onClick={uploadSelectedFiles} disabled={uploadDisabled}>
             {uploading || processingIds.length > 0 ? <Loader2 size={18} className="spin" /> : <Upload size={18} />}
-            <span>Start Upload</span>
+            <span>{t.startUpload}</span>
           </button>
         </div>
       </section>
 
+      {!hasExtractedData && !loading && (
+        <section className="empty-dashboard-note">
+          <h2>{t.noDataTitle}</h2>
+          <p>{t.noDataText}</p>
+        </section>
+      )}
+
+      {hasExtractedData && (
       <section className={tablesExpanded ? "hierarchy-panel expanded" : "hierarchy-panel"}>
         <div className="hierarchy-header">
           <div className="hierarchy-level client-level">
@@ -514,9 +735,9 @@ function App() {
               className="client-disclosure"
               type="button"
               aria-expanded={tablesExpanded}
-              aria-label={tablesExpanded ? "Hide invoice tables" : "Show invoice tables"}
+              aria-label={tablesExpanded ? t.hideTables : t.showTables}
               onClick={() => setTablesExpanded((expanded) => !expanded)}
-              title={tablesExpanded ? "Hide tables" : "Show tables"}
+              title={tablesExpanded ? t.hideTables : t.showTables}
             >
               <ChevronDown size={19} className={tablesExpanded ? "disclosure-icon open" : "disclosure-icon"} />
             </button>
@@ -529,7 +750,7 @@ function App() {
                   value={selectedClientId}
                   onChange={(event) => setSelectedClientId(event.target.value)}
                 >
-                  <option value="all">All clients</option>
+                  <option value="all">{t.allClients}</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
                       {client.name}
@@ -542,30 +763,31 @@ function App() {
           </div>
 
           <div className="hierarchy-summary">
-            <span>{filteredInvoices.length} invoices</span>
-            <span>{filteredPositions.length} positions</span>
+            <span>{filteredInvoices.length} {t.invoices.toLowerCase()}</span>
+            <span>{filteredPositions.length} {t.positions.toLowerCase()}</span>
           </div>
         </div>
 
         <div className={tablesExpanded ? "tables-collapse open" : "tables-collapse"} aria-hidden={!tablesExpanded}>
           <div className="tables-collapse-inner">
             <DataSection
-              title="Invoice"
+              title={t.invoiceTableTitle}
               rows={filteredInvoices}
               columns={invoiceColumns}
               loading={loading}
               exportVisible={exportAllowed}
               onExport={() => downloadExport("/api/exports/lexware_invoice_review.xlsx")}
-              exportTitle="combined invoice review"
+              exportTitle={t.exportExcel}
               page={invoicePage}
               onPageChange={setInvoicePage}
               pageSize={INVOICE_TABLE_PAGE_SIZE}
               validationDetailsByInvoiceId={validationDetailsByInvoiceId}
               onLoadValidationDetails={loadValidationDetails}
+              copy={t}
             />
 
             <DataSection
-              title="Invoice POS"
+              title={t.positionTableTitle}
               rows={filteredPositions}
               columns={posColumns}
               loading={loading}
@@ -574,26 +796,30 @@ function App() {
               onPageChange={setPositionPage}
               pageSize={POSITION_TABLE_PAGE_SIZE}
               compact
+              copy={t}
             />
           </div>
         </div>
       </section>
+      )}
 
-      <section className="reset-section" aria-label="Reset extracted tables">
+      {hasExtractedData && (
+      <section className="reset-section" aria-label={t.resetTitle}>
         <div>
-          <h2>Reset Process</h2>
-          <p>Delete all extracted database rows before starting a new test run.</p>
+          <h2>{t.resetTitle}</h2>
+          <p>{t.resetText}</p>
         </div>
         <button
           className="danger-icon-button"
           type="button"
           onClick={() => setResetModalOpen(true)}
           disabled={!hasExtractedData || uploading || processingIds.length > 0 || resetting}
-          title={hasExtractedData ? "Delete extracted tables" : "No extracted data to delete"}
+          title={t.deleteTablesTitle}
         >
           <Trash2 size={20} />
         </button>
       </section>
+      )}
 
       {resetModalOpen && (
         <div className="modal-backdrop" role="presentation">
@@ -601,15 +827,15 @@ function App() {
             <div className="modal-icon">
               <Trash2 size={22} />
             </div>
-            <h2 id="reset-title">Delete extracted tables?</h2>
-            <p>Are you sure you want to repeat the process again and delete the tables?</p>
+            <h2 id="reset-title">{t.deleteTablesTitle}</h2>
+            <p>{t.deleteTablesText}</p>
             <div className="modal-actions">
               <button className="modal-secondary" type="button" onClick={() => setResetModalOpen(false)} disabled={resetting}>
-                No
+                {t.no}
               </button>
               <button className="modal-danger" type="button" onClick={resetExtractedTables} disabled={resetting}>
                 {resetting ? <Loader2 size={16} className="spin" /> : <Trash2 size={16} />}
-                <span>Yes, delete</span>
+                <span>{t.yesDelete}</span>
               </button>
             </div>
           </section>
@@ -618,12 +844,12 @@ function App() {
 
       {(uploading || processingIds.length > 0) && (
         <div className="processing-screen" role="alert" aria-live="assertive" aria-busy="true">
-          <section className="processing-card" aria-label="Invoice processing">
+          <section className="processing-card" aria-label={t.processingInvoices}>
             <div className="processing-spinner">
               <Loader2 size={42} className="spin" />
             </div>
-            <h2>Processing invoices</h2>
-            <p>{processingMessage || "Your request is being processed. Please wait until extraction finishes."}</p>
+            <h2>{t.processingInvoices}</h2>
+            <p>{processingMessage || t.processingWait}</p>
           </section>
         </div>
       )}
@@ -635,6 +861,76 @@ function wait(ms) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+function LoginPage({ copy, language, onLanguageChange, values, error, onChange, onSubmit }) {
+  return (
+    <main className="login-shell">
+      <section className="login-card">
+        <div className="login-topbar">
+          <span className="brand-mark">HEDSOFT</span>
+          <LanguageSwitch language={language} onChange={onLanguageChange} />
+        </div>
+        <div className="login-copy">
+          <h1>{copy.loginTitle}</h1>
+          <p>{copy.loginSubtitle}</p>
+        </div>
+        <form className="login-form" onSubmit={onSubmit}>
+          <label>
+            <span>{copy.username}</span>
+            <input
+              type="text"
+              value={values.username}
+              onChange={(event) => onChange({ ...values, username: event.target.value })}
+              autoComplete="username"
+            />
+          </label>
+          <label>
+            <span>{copy.password}</span>
+            <input
+              type="password"
+              value={values.password}
+              onChange={(event) => onChange({ ...values, password: event.target.value })}
+              autoComplete="current-password"
+            />
+          </label>
+          {error && (
+            <p className="login-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button className="primary-button" type="submit">
+            {copy.signIn}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
+function LanguageSwitch({ language, onChange }) {
+  return (
+    <div className="language-switch" aria-label="Language selection">
+      <button
+        type="button"
+        className={language === "en" ? "active" : ""}
+        onClick={() => onChange("en")}
+        aria-label="Show interface in English"
+        title="English"
+      >
+        <span aria-hidden="true">🇬🇧</span>
+      </button>
+      <button
+        type="button"
+        className={language === "de" ? "active" : ""}
+        onClick={() => onChange("de")}
+        aria-label="Benutzeroberflaeche auf Deutsch anzeigen"
+        title="Deutsch"
+      >
+        <span aria-hidden="true">🇩🇪</span>
+      </button>
+    </div>
+  );
 }
 
 function SummaryTile({ label, value, tone }) {
@@ -660,6 +956,7 @@ function DataSection({
   compact = false,
   validationDetailsByInvoiceId = {},
   onLoadValidationDetails,
+  copy,
 }) {
   const [columnWidths, setColumnWidths] = useState(() =>
     Object.fromEntries(columns.map((column) => [column.key, column.width || 160])),
@@ -747,13 +1044,13 @@ function DataSection({
               <tr>
                 <td colSpan={columns.length} className="empty-cell">
                   <Loader2 size={18} className="spin" />
-                  Loading data
+                  {copy.loadingData}
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="empty-cell">
-                  No rows to display
+                  {copy.noRows}
                 </td>
               </tr>
             ) : (
@@ -767,6 +1064,7 @@ function DataSection({
                           details={validationDetailsByInvoiceId[String(row.id)]}
                           invoiceId={row.id}
                           onLoad={onLoadValidationDetails}
+                          copy={copy}
                         />
                       ) : (
                         formatCell(row[column.key], column, row)
@@ -785,12 +1083,13 @@ function DataSection({
         totalPages={totalPages}
         totalRows={rows.length}
         onPageChange={onPageChange}
+        copy={copy}
       />
     </section>
   );
 }
 
-function Pagination({ page, totalPages, totalRows, onPageChange }) {
+function Pagination({ page, totalPages, totalRows, onPageChange, copy }) {
   const pages = paginationRange(page, totalPages);
   const canGoBack = page > 1;
   const canGoForward = page < totalPages;
@@ -798,11 +1097,11 @@ function Pagination({ page, totalPages, totalRows, onPageChange }) {
   return (
     <div className="pagination-bar">
       <span>
-        Page {page} of {totalPages} · {totalRows} rows
+        {copy.page} {page} {copy.of} {totalPages} · {totalRows} {copy.rows}
       </span>
       <div className="pagination-actions">
         <button type="button" onClick={() => onPageChange(page - 1)} disabled={!canGoBack}>
-          Previous
+          {copy.previous}
         </button>
         {pages.map((item, index) =>
           item === "ellipsis" ? (
@@ -821,7 +1120,7 @@ function Pagination({ page, totalPages, totalRows, onPageChange }) {
           ),
         )}
         <button type="button" onClick={() => onPageChange(page + 1)} disabled={!canGoForward}>
-          Next
+          {copy.next}
         </button>
       </div>
     </div>
@@ -869,7 +1168,7 @@ function formatCell(value, column, row = {}) {
   return String(value);
 }
 
-function ValidationIssuesCell({ count, details, invoiceId, onLoad }) {
+function ValidationIssuesCell({ count, details, invoiceId, onLoad, copy }) {
   if (!count) {
     return <span className="validation-empty" aria-label="No validation errors">-</span>;
   }
@@ -895,16 +1194,16 @@ function ValidationIssuesCell({ count, details, invoiceId, onLoad }) {
         <span>{count}</span>
       </button>
       <span className="validation-tooltip" role="tooltip">
-        <strong>{count === 1 ? "1 validation issue" : `${count} validation issues`}</strong>
+        <strong>{count === 1 ? `1 ${copy.validationIssue}` : `${count} ${copy.validationIssuesLower}`}</strong>
         {details?.loading ? (
-          <span className="validation-tooltip-message">Loading validation details...</span>
+          <span className="validation-tooltip-message">{copy.validationLoading}</span>
         ) : details?.error ? (
           <span className="validation-tooltip-message error">{details.error}</span>
         ) : visibleErrors.length ? (
           <span className="validation-tooltip-table">
-            <span>Check</span>
-            <span>Expected</span>
-            <span>Actual</span>
+            <span>{copy.check}</span>
+            <span>{copy.expected}</span>
+            <span>{copy.actual}</span>
             {visibleErrors.map((error, index) => (
               <React.Fragment key={`${error.check_name}-${index}`}>
                 <span>{formatCheckName(error.check_name)}</span>
@@ -914,9 +1213,9 @@ function ValidationIssuesCell({ count, details, invoiceId, onLoad }) {
             ))}
           </span>
         ) : (
-          <span className="validation-tooltip-message">Hover again to load validation details.</span>
+          <span className="validation-tooltip-message">{copy.validationHoverAgain}</span>
         )}
-        {hiddenCount > 0 && <em>+ {hiddenCount} more</em>}
+        {hiddenCount > 0 && <em>+ {hiddenCount} {copy.more}</em>}
       </span>
     </span>
   );

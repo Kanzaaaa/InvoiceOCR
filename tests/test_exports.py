@@ -10,14 +10,14 @@ class ExportQueryTests(unittest.TestCase):
     def test_combined_invoice_review_export_nests_positions_under_invoice(self):
         invoices = [
             {
-                "invoice_id": 1,
-                "invoice_number": "R-100",
+                "Rechnungs-ID": 1,
+                "Rechnungsnummer": "R-100",
                 "Dateiname": "invoice.pdf",
                 "Kunde/Lieferant": "ACME GmbH",
-                "street": "Mainstr.",
-                "house_number": "10",
-                "postal_code": "60386",
-                "city": "Frankfurt",
+                "Strasse": "Mainstr.",
+                "Hausnummer": "10",
+                "PLZ": "60386",
+                "Stadt": "Frankfurt",
                 "Dokumenttyp": "invoice",
                 "Belegdatum": "2026-08-01",
                 "Netto": "100.00",
@@ -27,14 +27,14 @@ class ExportQueryTests(unittest.TestCase):
                 "Validierungsfehler": 0,
             },
             {
-                "invoice_id": 2,
-                "invoice_number": "R-200",
+                "Rechnungs-ID": 2,
+                "Rechnungsnummer": "R-200",
                 "Dateiname": "invoice-2.pdf",
                 "Kunde/Lieferant": "Bauhaus GmbH",
-                "street": None,
-                "house_number": None,
-                "postal_code": "60386",
-                "city": "Frankfurt",
+                "Strasse": None,
+                "Hausnummer": None,
+                "PLZ": "60386",
+                "Stadt": "Frankfurt",
                 "Dokumenttyp": "receipt",
                 "Belegdatum": "2026-08-02",
                 "Netto": None,
@@ -46,8 +46,8 @@ class ExportQueryTests(unittest.TestCase):
         ]
         positions = [
             {
-                "invoice_id": 1,
-                "invoice_number": "R-100",
+                "Rechnungs-ID": 1,
+                "Rechnungsnummer": "R-100",
                 "Kunde/Lieferant": "ACME GmbH",
                 "Belegdatum": "2026-08-01",
                 "Position": 1,
@@ -62,17 +62,19 @@ class ExportQueryTests(unittest.TestCase):
         workbook = load_workbook(workbook_file)
         worksheet = workbook["invoice_review"]
 
-        self.assertEqual(worksheet["A1"].value, "invoice_id")
-        self.assertEqual(worksheet["E1"].value, "street")
-        self.assertEqual(worksheet["F1"].value, "house_number")
-        self.assertEqual(worksheet["G1"].value, "postal_code")
-        self.assertEqual(worksheet["H1"].value, "city")
+        self.assertEqual(worksheet["A1"].value, "Rechnungs-ID")
+        self.assertEqual(worksheet["B1"].value, "Rechnungsnummer")
+        self.assertEqual(worksheet["E1"].value, "Strasse")
+        self.assertEqual(worksheet["F1"].value, "Hausnummer")
+        self.assertEqual(worksheet["G1"].value, "PLZ")
+        self.assertEqual(worksheet["H1"].value, "Stadt")
         self.assertEqual(worksheet["A2"].value, 1)
         self.assertEqual(worksheet["E2"].value, "Mainstr.")
         self.assertEqual(worksheet["F2"].value, "10")
         self.assertEqual(worksheet["G2"].value, "60386")
         self.assertEqual(worksheet["H2"].value, "Frankfurt")
-        self.assertEqual(worksheet["B3"].value, "invoice_id")
+        self.assertEqual(worksheet["B3"].value, "Rechnungs-ID")
+        self.assertEqual(worksheet["C3"].value, "Rechnungsnummer")
         self.assertEqual(worksheet["F3"].value, "Position")
         self.assertEqual(worksheet["B4"].value, 1)
         self.assertEqual(worksheet["F4"].value, 1)
