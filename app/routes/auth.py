@@ -1,7 +1,7 @@
 from secrets import compare_digest
 
 from flask import Blueprint, current_app, jsonify, request, session
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import ServiceUnavailable, Unauthorized
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -12,8 +12,13 @@ def login():
     username = str(payload.get("username") or "")
     password = str(payload.get("password") or "")
 
-    expected_username = str(current_app.config["APP_USERNAME"])
-    expected_password = str(current_app.config["APP_PASSWORD"])
+    expected_username = current_app.config.get("APP_USERNAME")
+    expected_password = current_app.config.get("APP_PASSWORD")
+    if not expected_username or not expected_password:
+        raise ServiceUnavailable("Login is not configured")
+
+    expected_username = str(expected_username)
+    expected_password = str(expected_password)
     if not compare_digest(username, expected_username) or not compare_digest(password, expected_password):
         raise Unauthorized("Invalid username or password")
 

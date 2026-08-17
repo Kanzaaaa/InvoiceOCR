@@ -83,7 +83,7 @@ OPENAI_MODEL=gpt-5.6-sol
 OPENAI_FILE_DETAIL=high
 
 APP_USERNAME=admin
-APP_PASSWORD=xciteinvoiceocr2026
+APP_PASSWORD=replace-with-a-strong-password
 SECRET_KEY=replace-with-a-long-random-value
 
 POSTGRES_HOST=localhost
@@ -192,7 +192,7 @@ The local login defaults are controlled by the Flask backend:
 
 ```ini
 APP_USERNAME=admin
-APP_PASSWORD=xciteinvoiceocr2026
+APP_PASSWORD=replace-with-a-strong-password
 ```
 
 Then restart the frontend dev server.
@@ -237,7 +237,7 @@ Login and create a Flask session cookie:
 ```bash
 curl -c cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"xciteinvoiceocr2026"}' \
+  -d '{"username":"admin","password":"your-app-password"}' \
   http://localhost:5000/api/auth/login
 ```
 
